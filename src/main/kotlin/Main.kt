@@ -27,19 +27,20 @@ fun App() {
     val yMin by remember { mutableStateOf(0) }
     var xMax by remember { mutableStateOf( 10) }
     var yMinMax by remember{mutableStateOf(0f)}
+    var ht by remember{mutableStateOf(0f)}
     var selectY by remember{mutableStateOf(true)}
     var build by remember{mutableStateOf(false)}
-    var y0 by remember{mutableStateOf(0f)}
     val textMeasurer = rememberTextMeasurer()
     val polypoints by  remember{mutableStateOf(mutableListOf<Offset>())}
     val points by remember { mutableStateOf(mutableListOf<Pair<Float, Float>>())}
-    var can = Canvas(modifier = Modifier.fillMaxSize().clickable{}.
+    Canvas(modifier = Modifier.fillMaxSize().clickable{}.
         onPointerEvent(PointerEventType.Press){
             polypoints.clear()
             var point = it.changes.first().position
             points.add(Pair(point.x, point.y))
         },
         onDraw = {
+            ht = this.size.height
             var yMax = this.size.height*(xMax-xMin)/this.size.width+yMin
             //ось OX
             drawLine(
@@ -47,7 +48,6 @@ fun App() {
                 start = Offset(0f, this.size.height * (1 + yMinMax) / 2),
                 end = Offset(this.size.width, this.size.height * (1 + yMinMax) / 2)
             )
-            y0 = this.size.height * (1 + yMinMax) / 2
             //ось OY
             drawLine(color = Color.Black,
                 start = Offset(-this.size.width*xMin/(xMax-xMin), 0f),
@@ -56,9 +56,10 @@ fun App() {
                 drawCircle(
                     color = Color.Green,
                     radius = 10f,
-                    center = Offset(x, y)
+                    center = Offset(x, y+yMinMax*size.height/2)
                 )
             }
+
             for(i in xMin .. xMax) {
                 drawLine(color = Color.Black,
                     start = Offset(this.size.width*(i-xMin)/(xMax-xMin),
@@ -72,7 +73,7 @@ fun App() {
             if (build){
                 for (x in 0..size.width.toInt()) {
                     val y = BuildPoly(x.toFloat(),points)
-                    polypoints.add(Offset(x.toFloat(), y))
+                    polypoints.add(Offset(x.toFloat(), y+yMinMax*ht/2))
                 }
                 drawPoints(
                     points = polypoints,
@@ -118,13 +119,13 @@ fun App() {
                 //Text(text = "${yMinMax}", fontSize = 10.sp)
                 if(!selectY) {
                     Slider(value = yMinMax,
-                        valueRange = -1f..1f,
+                        valueRange = -0.99f..0.99f,
                         steps = 9,
-                        onValueChange = { yMinMax = it })
+                        onValueChange = { yMinMax = it;polypoints.clear();})
                 }
                 else{
                     TextField(value = yMinMax.toString(),
-                        onValueChange = { value -> yMinMax = value.toFloatOrNull() ?: 0f })
+                        onValueChange = { value -> yMinMax = value.toFloatOrNull() ?: 0f; polypoints.clear() })
                 }
             }
         }
